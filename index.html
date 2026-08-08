@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Minhas Finanças</title>
+<meta name="theme-color" content="#0e1512">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icone.svg">
+<link rel="icon" href="icone.svg" type="image/svg+xml">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co; img-src 'self' data:; base-uri 'self'; form-action 'self'; object-src 'none';">
+<script>
+  window.SUPA_URL = 'https://rggbpymfwlycxwkujgfk.supabase.co';
+  window.SUPA_ANON = 'sb_publishable_0S2fGjf5he9-FaghcTxkcA_1q8-n5IY';
+  window.AUTH_ATIVO = !!(window.SUPA_URL && window.SUPA_ANON && window.SUPA_ANON.indexOf('COLE') === -1);
+  if (window.AUTH_ATIVO) document.documentElement.classList.add('locked');
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.0/dist/umd/supabase.js"
+  integrity="sha384-3lSoufGjgosjqp3JDr/NReX3PjMd3SlC8wJ23CWFjB6DSFNf71I0DhcRTUm9MwgO"
+  crossorigin="anonymous"
+  onerror="document.write('\x3Cscript src=&quot;https://unpkg.com/@supabase/supabase-js@2.112.0/dist/umd/supabase.js&quot;\x3E\x3C/script\x3E')"></script>
+<style>
+:root{
+  --bg:#0e1512; --card:#18211d; --card-inner:#1f2a25; --borda:#25322c;
+  --menta:#2ee6a8; --menta-escuro:#22b884; --entrada:#2ee6a8; --saida:#ff6b6b;
+  --amarelo:#e6c22e; --txt:#e8f0ec; --txt2:#8fa39a; --sombra:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom));min-height:100vh;}
+h1,h3{margin:0;}
+h3{margin:0 0 10px;font-size:13px;color:var(--txt2);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+button{font-family:inherit;}
+a{color:var(--menta);}
+
+#app{display:none;}
+
+.topo-app{padding:calc(16px + env(safe-area-inset-top)) 18px 8px;display:flex;align-items:center;justify-content:space-between;}
+.topo-app .logo{font-weight:700;font-size:19px;letter-spacing:-.02em;}
+.topo-app .logo b{color:var(--menta);}
+.btn-sair{background:none;border:none;color:var(--txt2);font-size:13px;padding:6px 10px;cursor:pointer;}
+
+.aba{padding:0 18px 20px;}
+
+.mes-nav{display:flex;align-items:center;justify-content:center;gap:18px;padding:10px 0 16px;font-weight:600;font-size:15px;}
+.mes-nav button{width:32px;height:32px;border-radius:50%;border:1px solid var(--borda);background:var(--card);color:var(--txt);font-size:16px;cursor:pointer;}
+
+.cards-resumo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px;}
+.card-resumo{background:var(--card);border:1px solid var(--borda);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:6px;}
+.card-label{font-size:12px;color:var(--txt2);}
+.card-valor{font-size:19px;font-weight:700;}
+.card-valor.entrada{color:var(--entrada);}
+.card-valor.saida{color:var(--saida);}
+.card-valor.alerta{color:var(--amarelo);}
+
+.secao{margin-bottom:24px;}
+.grafico-vazio{color:var(--txt2);font-size:13px;padding:20px 0;text-align:center;}
+.grafico-barras{width:100%;height:auto;display:block;}
+.grafico-donut-wrap{display:flex;align-items:center;gap:16px;}
+.grafico-donut{width:110px;height:110px;flex-shrink:0;}
+.legenda{display:flex;flex-direction:column;gap:6px;font-size:12.5px;flex:1;min-width:0;}
+.legenda-item{display:flex;align-items:center;gap:6px;color:var(--txt2);}
+.legenda-item b{color:var(--txt);margin-left:auto;white-space:nowrap;}
+.legenda-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+.barra-necessidade{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--card-inner);margin-bottom:10px;}
+.barra-necessidade .seg.necessario{background:var(--menta);}
+.barra-necessidade .seg.superfluo{background:#ff9f43;}
+.barra-necessidade .seg.semclass{background:var(--txt2);opacity:.35;}
+.necessidade-legenda{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--txt2);}
+.necessidade-legenda .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
+.necessidade-legenda .dot.necessario{background:var(--menta);}
+.necessidade-legenda .dot.superfluo{background:#ff9f43;}
+.necessidade-legenda .dot.semclass{background:var(--txt2);}
+.necessidade-legenda b{color:var(--txt);margin-left:4px;}
+
+.lista-transacoes{display:flex;flex-direction:column;gap:8px;}
+.transacao{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--borda);border-radius:14px;padding:10px 12px;cursor:pointer;}
+.transacao-icone{width:38px;height:38px;border-radius:50%;background:var(--card-inner);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.transacao-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;}
+.transacao-desc{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.transacao-meta{font-size:11.5px;color:var(--txt2);}
+.transacao-meta .pendente{color:var(--amarelo);}
+.transacao-valor{font-weight:700;font-size:14.5px;white-space:nowrap;}
+.transacao-valor.entrada{color:var(--entrada);}
+.transacao-valor.saida{color:var(--saida);}
+.vazio{color:var(--txt2);font-size:13.5px;text-align:center;padding:30px 0;}
+
+.filtros{display:flex;gap:8px;margin-bottom:14px;}
+.filtros select{flex:1;background:var(--card);border:1px solid var(--borda);color:var(--txt);border-radius:10px;padding:8px 10px;font-size:13px;}
+
+.conta-fixa{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"icone info valor" "icone info botao";align-items:center;gap:2px 12px;background:var(--card);border:1px solid var(--borda);border-radius:14px;padding:12px;margin-bottom:10px;}
+.conta-fixa-icone{grid-area:icone;width:38px;height:38px;border-radius:50%;background:var(--card-inner);display:flex;align-items:center;justify-content:center;font-size:17px;}
+.conta-fixa-info{grid-area:info;display:flex;flex-direction:column;gap:4px;min-width:0;}
+.conta-fixa-nome{font-weight:600;font-size:14px;cursor:pointer;}
+.conta-fixa-valor{grid-area:valor;font-weight:700;font-size:14.5px;text-align:right;}
+.conta-fixa-badge{font-size:11px;padding:2px 8px;border-radius:99px;width:fit-content;}
+.conta-fixa-badge.ok{background:rgba(46,230,168,.15);color:var(--menta);}
+.conta-fixa-badge.perto{background:rgba(230,194,46,.15);color:var(--amarelo);}
+.conta-fixa-badge.atrasada{background:rgba(255,107,107,.15);color:var(--saida);}
+.conta-fixa-badge.normal{background:var(--card-inner);color:var(--txt2);}
+.btn-pagar{grid-area:botao;justify-self:end;background:var(--menta);color:#04140f;border:none;border-radius:99px;padding:6px 12px;font-size:11.5px;font-weight:700;cursor:pointer;}
+
+.meta-card{background:var(--card);border:1px solid var(--borda);border-radius:16px;padding:14px;margin-bottom:12px;}
+.meta-topo{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:10px;}
+.meta-nome{font-weight:700;font-size:14.5px;cursor:pointer;}
+.meta-prazo{font-size:11.5px;color:var(--txt2);white-space:nowrap;}
+.meta-barra{height:8px;background:var(--card-inner);border-radius:99px;overflow:hidden;margin-bottom:8px;}
+.meta-progresso{height:100%;background:linear-gradient(90deg,var(--menta-escuro),var(--menta));border-radius:99px;}
+.meta-valores{display:flex;justify-content:space-between;font-size:12.5px;color:var(--txt2);margin-bottom:10px;}
+.btn-guardar{width:100%;background:var(--card-inner);color:var(--menta);border:1px solid var(--borda);border-radius:10px;padding:9px;font-weight:600;font-size:13px;cursor:pointer;}
+
+.tab-bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--borda);display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:20;}
+.tab-btn{flex:1;background:none;border:none;color:var(--txt2);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;padding:4px;cursor:pointer;}
+.tab-btn .tab-icone{font-size:19px;}
+.tab-btn.ativo{color:var(--menta);}
+
+.fab{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:50%;background:var(--menta);color:#04140f;border:none;font-size:26px;font-weight:400;box-shadow:var(--sombra);cursor:pointer;z-index:21;display:flex;align-items:center;justify-content:center;line-height:1;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:30;}
+.modal-overlay.aberto{display:flex;}
+.modal-card{background:var(--card);width:100%;max-width:480px;border-radius:22px 22px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto;}
+.modal-card h3{color:var(--txt);font-size:17px;text-transform:none;letter-spacing:0;margin-bottom:16px;}
+.campo{margin-bottom:14px;}
+.campo label{display:block;font-size:12.5px;color:var(--txt2);margin-bottom:6px;}
+.campo input,.campo select{width:100%;background:var(--card-inner);border:1px solid var(--borda);color:var(--txt);border-radius:10px;padding:11px 12px;font-size:15px;}
+.campo-check label{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--txt);}
+.campo-check input{width:auto;}
+.segmento{display:flex;gap:8px;}
+.segmento label{flex:1;background:var(--card-inner);border:1px solid var(--borda);border-radius:10px;padding:10px;text-align:center;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.segmento input{width:auto;margin:0;}
+.modal-botoes{display:flex;gap:10px;margin-top:6px;}
+.btn-salvar{flex:1;background:var(--menta);color:#04140f;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:14.5px;cursor:pointer;width:100%;}
+.btn-excluir{background:none;border:1px solid var(--saida);color:var(--saida);border-radius:12px;padding:13px 16px;font-weight:600;font-size:13.5px;cursor:pointer;}
+
+.auth-gate{position:fixed;inset:0;background:linear-gradient(160deg,#0e1512,#16211c);display:none;align-items:center;justify-content:center;padding:24px;z-index:40;}
+html.locked .auth-gate{display:flex;}
+.auth-card{background:var(--card);border:1px solid var(--borda);border-radius:22px;padding:28px 24px;width:100%;max-width:380px;box-shadow:var(--sombra);}
+.auth-card h1{font-size:22px;margin:0 0 4px;}
+.auth-card h1 b{color:var(--menta);}
+.auth-card p.sub{color:var(--txt2);font-size:13px;margin:0 0 20px;}
+.auth-msg{font-size:12.5px;min-height:16px;margin-top:10px;}
+.auth-msg.err{color:var(--saida);}
+.auth-msg.ok{color:var(--menta);}
+.auth-alt{font-size:12.5px;color:var(--txt2);text-align:center;margin-top:14px;}
+.auth-reset{font-size:12px;color:var(--txt2);text-align:right;margin-top:-6px;margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <h1>Minhas <b>Finanças</b></h1>
+    <p class="sub">Entre para acessar seus dados em qualquer aparelho.</p>
+
+    <form id="authFormNormal" onsubmit="authPrincipal(event)">
+      <div class="campo"><label>E-mail</label><input name="email" type="email" required autocomplete="email"></div>
+      <div class="campo"><label>Senha</label><input name="senha" type="password" required minlength="6" autocomplete="current-password"></div>
+      <div class="auth-reset"><a href="#" onclick="mostrarReset();return false;">Esqueci minha senha</a></div>
+      <button type="submit" class="btn-salvar" id="authBotaoPrincipal">Entrar</button>
+      <p class="auth-msg" id="authMsg"></p>
+      <p class="auth-alt" id="authAlternarTexto">Ainda não tem conta? <a href="#" onclick="alternarAuth();return false;">Criar conta</a></p>
+    </form>
+
+    <form id="authFormReset" style="display:none" onsubmit="event.preventDefault();authReset();">
+      <div class="campo"><label>E-mail</label><input id="authEmailReset" type="email" required></div>
+      <button type="submit" class="btn-salvar">Enviar link de redefinição</button>
+      <p class="auth-alt"><a href="#" onclick="esconderReset();return false;">Voltar</a></p>
+    </form>
+
+    <form id="authFormNovaSenha" style="display:none" onsubmit="salvarNovaSenha(event)">
+      <div class="campo"><label>Nova senha</label><input name="novaSenha" type="password" required minlength="6"></div>
+      <button type="submit" class="btn-salvar">Salvar nova senha</button>
+    </form>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topo-app">
+    <span class="logo">Minhas <b>Finanças</b></span>
+    <button class="btn-sair" id="btnSair" onclick="sair()" style="display:none">Sair</button>
+  </div>
+
+  <div class="aba" id="aba-resumo"></div>
+  <div class="aba" id="aba-lancamentos" style="display:none"></div>
+  <div class="aba" id="aba-contasfixas" style="display:none"></div>
+  <div class="aba" id="aba-metas" style="display:none"></div>
+</div>
+
+<button class="fab" id="fab" onclick="fabClique()">+</button>
+
+<div class="tab-bar" id="tabBar">
+  <button class="tab-btn ativo" data-aba="resumo" onclick="setAba('resumo')"><span class="tab-icone">📊</span>Resumo</button>
+  <button class="tab-btn" data-aba="lancamentos" onclick="setAba('lancamentos')"><span class="tab-icone">📋</span>Lançamentos</button>
+  <button class="tab-btn" data-aba="contasfixas" onclick="setAba('contasfixas')"><span class="tab-icone">📌</span>Contas fixas</button>
+  <button class="tab-btn" data-aba="metas" onclick="setAba('metas')"><span class="tab-icone">🎯</span>Metas</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) fecharModal()">
+  <div class="modal-card" id="modalBody"></div>
+</div>
+
+<script>
+const CATEGORIAS = [
+  {id:'salario', nome:'Salário', emoji:'💼'},
+  {id:'freela', nome:'Freela', emoji:'💻'},
+  {id:'moradia', nome:'Moradia', emoji:'🏠'},
+  {id:'mercado', nome:'Mercado', emoji:'🛒'},
+  {id:'roupa', nome:'Roupa', emoji:'👕'},
+  {id:'transporte', nome:'Transporte', emoji:'🚗'},
+  {id:'saude', nome:'Saúde', emoji:'💊'},
+  {id:'lazer', nome:'Lazer', emoji:'🎬'},
+  {id:'assinaturas', nome:'Assinaturas', emoji:'🔁'},
+  {id:'compras', nome:'Compras', emoji:'🛍️'},
+  {id:'educacao', nome:'Educação', emoji:'📚'},
+  {id:'outros', nome:'Outros', emoji:'✨'},
+];
+function catInfo(id){ return CATEGORIAS.find(c=>c.id===id) || CATEGORIAS[CATEGORIAS.length-1]; }
+
+const DB_KEY = 'fin_db_v1';
+function carregarDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      return {lancamentos:d.lancamentos||[], contas_fixas:d.contas_fixas||[], metas:d.metas||[]};
+    }
+  }catch(e){}
+  return {lancamentos:[], contas_fixas:[], metas:[]};
+}
+function persistDB(){ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }
+
+let DB = carregarDB();
+let mesResumo, mesLanc;
+let filtroTipo = 'todos';
+let filtroCategoria = 'todas';
+let abaAtual = 'resumo';
+let sb = null;
+let sessaoAtual = null;
+
+function hojeISO(){ return new Date().toISOString().slice(0,10); }
+function mesDe(dataISO){ return dataISO.slice(0,7); }
+function somarMes(mesISO, delta){
+  const [y,m] = mesISO.split('-').map(Number);
+  const d = new Date(y, m-1+delta, 1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function formatMes(mesISO){
+  const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const [y,m] = mesISO.split('-').map(Number);
+  return nomes[m-1]+' '+y;
+}
+function formatDataCurta(d){ const [,m,dd] = d.split('-'); return dd+'/'+m; }
+function formatBRL(v){ return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function uid(){ return crypto.randomUUID(); }
+
+/* ---------- navegação de abas ---------- */
+function setAba(nome){
+  abaAtual = nome;
+  ['resumo','lancamentos','contasfixas','metas'].forEach(n=>{
+    document.getElementById('aba-'+n).style.display = n===nome ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('ativo', b.dataset.aba===nome));
+}
+function fabClique(){
+  if(abaAtual==='contasfixas') abrirModalContaFixa(null);
+  else if(abaAtual==='metas') abrirModalMeta(null);
+  else abrirModalLancamento(null);
+}
+
+/* ---------- modal genérico ---------- */
+function abrirModal(html){
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('aberto');
+}
+function fecharModal(){
+  document.getElementById('modalOverlay').classList.remove('aberto');
+  document.getElementById('modalBody').innerHTML = '';
+}
+
+/* ---------- render: componentes compartilhados ---------- */
+function listaTransacoes(lista){
+  if(!lista.length) return '<div class="vazio">Nada por aqui ainda.</div>';
+  return lista.map(l=>{
+    const info = catInfo(l.categoria);
+    const sinal = l.tipo==='entrada' ? '+' : '−';
+    return `<div class="transacao" onclick="abrirModalLancamento('${l.id}')">
+      <div class="transacao-icone">${info.emoji}</div>
+      <div class="transacao-info">
+        <span class="transacao-desc">${escapeHtml(l.descricao) || info.nome}</span>
+        <span class="transacao-meta">${formatDataCurta(l.data)} · ${info.nome}${!l.pago?' · <span class="pendente">pendente</span>':''}${l.necessidade==='superfluo'?' · <span class="pendente">supérfluo</span>':''}</span>
+      </div>
+      <div class="transacao-valor ${l.tipo}">${sinal} ${formatBRL(l.valor)}</div>
+    </div>`;
+  }).join('');
+}
+
+function svgBarras6Meses(){
+  const meses = [];
+  let m = mesResumo;
+  for(let i=0;i<6;i++){ meses.unshift(m); m = somarMes(m,-1); }
+  const dados = meses.map(mm=>{
+    const entradas = DB.lancamentos.filter(l=>l.tipo==='entrada'&&mesDe(l.data)===mm).reduce((s,l)=>s+l.valor,0);
+    const saidas = DB.lancamentos.filter(l=>l.tipo==='saida'&&mesDe(l.data)===mm).reduce((s,l)=>s+l.valor,0);
+    return {mes:mm, entradas, saidas};
+  });
+  const max = Math.max(1, ...dados.flatMap(d=>[d.entradas,d.saidas]));
+  const larguraGrupo = 320/6;
+  let barras = '';
+  dados.forEach((d,i)=>{
+    const x = i*larguraGrupo;
+    const hE = (d.entradas/max)*78;
+    const hS = (d.saidas/max)*78;
+    barras += `<rect x="${x+7}" y="${88-hE}" width="9" height="${hE}" rx="2" fill="var(--entrada)"/>`;
+    barras += `<rect x="${x+20}" y="${88-hS}" width="9" height="${hS}" rx="2" fill="var(--saida)"/>`;
+    barras += `<text x="${x+larguraGrupo/2}" y="104" font-size="9" fill="#8fa39a" text-anchor="middle">${d.mes.slice(5)}</text>`;
+  });
+  return `<svg viewBox="0 0 320 112" class="grafico-barras" preserveAspectRatio="xMidYMid meet">${barras}</svg>`;
+}
+
+function svgDonutCategorias(){
+  const porCategoria = {};
+  DB.lancamentos.filter(l=>l.tipo==='saida'&&mesDe(l.data)===mesResumo).forEach(l=>{
+    porCategoria[l.categoria] = (porCategoria[l.categoria]||0)+l.valor;
+  });
+  const entradas = Object.entries(porCategoria).sort((a,b)=>b[1]-a[1]);
+  const total = entradas.reduce((s,[,v])=>s+v,0);
+  if(!total) return '<div class="grafico-vazio">Sem gastos neste mês</div>';
+  const cores = ['#2ee6a8','#4fd1c5','#f6ad55','#fc8181','#b794f4','#63b3ed','#f687b3','#68d391','#f6e05e','#a0aec0','#ed8936'];
+  const raio = 40, circ = 2*Math.PI*raio;
+  let acumulado = 0, segmentos = '';
+  entradas.forEach(([catId,valor],i)=>{
+    const comprimento = (valor/total)*circ;
+    segmentos += `<circle cx="60" cy="60" r="${raio}" fill="none" stroke="${cores[i%cores.length]}" stroke-width="16" stroke-dasharray="${comprimento} ${circ-comprimento}" stroke-dashoffset="${-acumulado}" transform="rotate(-90 60 60)"/>`;
+    acumulado += comprimento;
+  });
+  const legenda = entradas.slice(0,6).map(([catId,valor],i)=>{
+    const info = catInfo(catId);
+    return `<div class="legenda-item"><span class="legenda-dot" style="background:${cores[i%cores.length]}"></span>${info.emoji} ${info.nome}<b>${formatBRL(valor)}</b></div>`;
+  }).join('');
+  return `<div class="grafico-donut-wrap"><svg viewBox="0 0 120 120" class="grafico-donut">${segmentos}</svg><div class="legenda">${legenda}</div></div>`;
+}
+
+function svgNecessidade(){
+  const saidas = DB.lancamentos.filter(l=>l.tipo==='saida'&&mesDe(l.data)===mesResumo);
+  const necessario = saidas.filter(l=>l.necessidade==='necessario').reduce((s,l)=>s+l.valor,0);
+  const superfluo = saidas.filter(l=>l.necessidade==='superfluo').reduce((s,l)=>s+l.valor,0);
+  const semClassificar = saidas.filter(l=>!l.necessidade).reduce((s,l)=>s+l.valor,0);
+  const total = necessario + superfluo + semClassificar;
+  if(!total) return '<div class="grafico-vazio">Sem gastos neste mês</div>';
+  const pctN = (necessario/total)*100, pctS = (superfluo/total)*100, pctX = (semClassificar/total)*100;
+  return `
+    <div class="barra-necessidade">
+      <div class="seg necessario" style="width:${pctN}%"></div>
+      <div class="seg superfluo" style="width:${pctS}%"></div>
+      ${semClassificar ? `<div class="seg semclass" style="width:${pctX}%"></div>` : ''}
+    </div>
+    <div class="necessidade-legenda">
+      <span><span class="dot necessario"></span>Necessário<b>${formatBRL(necessario)}</b></span>
+      <span><span class="dot superfluo"></span>Supérfluo<b>${formatBRL(superfluo)}</b></span>
+      ${semClassificar ? `<span><span class="dot semclass"></span>Sem marcar<b>${formatBRL(semClassificar)}</b></span>` : ''}
+    </div>
+  `;
+}
+
+/* ---------- resumo ---------- */
+function renderResumo(){
+  const el = document.getElementById('aba-resumo');
+  const entradas = DB.lancamentos.filter(l=>l.tipo==='entrada'&&mesDe(l.data)===mesResumo).reduce((s,l)=>s+l.valor,0);
+  const saidas = DB.lancamentos.filter(l=>l.tipo==='saida'&&mesDe(l.data)===mesResumo).reduce((s,l)=>s+l.valor,0);
+  const saldo = entradas - saidas;
+  const aPagar = DB.lancamentos.filter(l=>l.tipo==='saida'&&!l.pago&&mesDe(l.data)===mesResumo).reduce((s,l)=>s+l.valor,0);
+  const ultimas = DB.lancamentos.filter(l=>mesDe(l.data)===mesResumo).sort((a,b)=>b.data.localeCompare(a.data)).slice(0,5);
+  el.innerHTML = `
+    <div class="mes-nav">
+      <button onclick="mudarMesResumo(-1)">‹</button>
+      <span>${formatMes(mesResumo)}</span>
+      <button onclick="mudarMesResumo(1)">›</button>
+    </div>
+    <div class="cards-resumo">
+      <div class="card-resumo"><span class="card-label">Entradas</span><span class="card-valor entrada">${formatBRL(entradas)}</span></div>
+      <div class="card-resumo"><span class="card-label">Saídas</span><span class="card-valor saida">${formatBRL(saidas)}</span></div>
+      <div class="card-resumo"><span class="card-label">Saldo</span><span class="card-valor ${saldo>=0?'entrada':'saida'}">${formatBRL(saldo)}</span></div>
+      <div class="card-resumo"><span class="card-label">A pagar</span><span class="card-valor alerta">${formatBRL(aPagar)}</span></div>
+    </div>
+    <div class="secao"><h3>Gastos por categoria</h3>${svgDonutCategorias()}</div>
+    <div class="secao"><h3>Necessário vs Supérfluo</h3>${svgNecessidade()}</div>
+    <div class="secao"><h3>Últimos 6 meses</h3>${svgBarras6Meses()}</div>
+    <div class="secao"><h3>Últimas transações</h3>${listaTransacoes(ultimas)}</div>
+  `;
+}
+function mudarMesResumo(delta){ mesResumo = somarMes(mesResumo, delta); renderResumo(); }
+
+/* ---------- lançamentos ---------- */
+function lancamentosFiltrados(){
+  return DB.lancamentos.filter(l=>mesDe(l.data)===mesLanc)
+    .filter(l=>filtroTipo==='todos'||l.tipo===filtroTipo)
+    .filter(l=>filtroCategoria==='todas'||l.categoria===filtroCategoria)
+    .sort((a,b)=>b.data.localeCompare(a.data));
+}
+function renderLancamentos(){
+  const el = document.getElementById('aba-lancamentos');
+  el.innerHTML = `
+    <div class="mes-nav">
+      <button onclick="mudarMesLanc(-1)">‹</button>
+      <span>${formatMes(mesLanc)}</span>
+      <button onclick="mudarMesLanc(1)">›</button>
+    </div>
+    <div class="filtros">
+      <select onchange="filtroTipo=this.value; renderLancamentos()">
+        <option value="todos" ${filtroTipo==='todos'?'selected':''}>Todos</option>
+        <option value="entrada" ${filtroTipo==='entrada'?'selected':''}>Entradas</option>
+        <option value="saida" ${filtroTipo==='saida'?'selected':''}>Saídas</option>
+      </select>
+      <select onchange="filtroCategoria=this.value; renderLancamentos()">
+        <option value="todas">Todas categorias</option>
+        ${CATEGORIAS.map(c=>`<option value="${c.id}" ${filtroCategoria===c.id?'selected':''}>${c.emoji} ${c.nome}</option>`).join('')}
+      </select>
+    </div>
+    <div class="lista-transacoes">${listaTransacoes(lancamentosFiltrados())}</div>
+  `;
+}
+function mudarMesLanc(delta){ mesLanc = somarMes(mesLanc, delta); renderLancamentos(); }
+
+function abrirModalLancamento(id){
+  const l = id ? DB.lancamentos.find(x=>x.id===id) : null;
+  abrirModal(`
+    <h3>${id?'Editar':'Novo'} lançamento</h3>
+    <form onsubmit="salvarLancamento(event, ${id?`'${id}'`:'null'})">
+      <div class="campo"><label>Tipo</label>
+        <div class="segmento">
+          <label><input type="radio" name="tipo" value="saida" onclick="atualizarVisibilidadeNecessidade()" ${!l||l.tipo==='saida'?'checked':''}> Saída</label>
+          <label><input type="radio" name="tipo" value="entrada" onclick="atualizarVisibilidadeNecessidade()" ${l&&l.tipo==='entrada'?'checked':''}> Entrada</label>
+        </div>
+      </div>
+      <div class="campo"><label>Valor (R$)</label><input name="valor" type="number" step="0.01" min="0" required value="${l?l.valor:''}"></div>
+      <div class="campo"><label>Data</label><input name="data" type="date" required value="${l?l.data:hojeISO()}"></div>
+      <div class="campo"><label>Categoria</label><select name="categoria">${CATEGORIAS.map(c=>`<option value="${c.id}" ${l&&l.categoria===c.id?'selected':''}>${c.emoji} ${c.nome}</option>`).join('')}</select></div>
+      <div class="campo"><label>Descrição</label><input name="descricao" type="text" maxlength="80" value="${l?escapeHtml(l.descricao||''):''}" placeholder="Opcional"></div>
+      <div class="campo campo-check"><label><input type="checkbox" name="pago" ${!l||l.pago?'checked':''}> Já pago/recebido</label></div>
+      <div class="campo" id="campoNecessidade" style="${(!l||l.tipo==='saida')?'':'display:none'}">
+        <label>Isso era necessário?</label>
+        <div class="segmento">
+          <label><input type="radio" name="necessidade" value="necessario" ${!l||!l.necessidade||l.necessidade==='necessario'?'checked':''}> Necessário</label>
+          <label><input type="radio" name="necessidade" value="superfluo" ${l&&l.necessidade==='superfluo'?'checked':''}> Supérfluo</label>
+        </div>
+      </div>
+      <div class="modal-botoes">
+        ${id?`<button type="button" class="btn-excluir" onclick="excluirLancamento('${id}')">Excluir</button>`:''}
+        <button type="submit" class="btn-salvar">Salvar</button>
+      </div>
+    </form>
+  `);
+}
+function atualizarVisibilidadeNecessidade(){
+  const form = document.querySelector('#modalBody form');
+  const campo = document.getElementById('campoNecessidade');
+  if(!form || !campo) return;
+  campo.style.display = form.tipo.value==='saida' ? 'block' : 'none';
+}
+function salvarLancamento(ev, id){
+  ev.preventDefault();
+  const f = ev.target;
+  const existente = id ? DB.lancamentos.find(l=>l.id===id) : null;
+  const registro = {
+    id: id || uid(),
+    data: f.data.value,
+    tipo: f.tipo.value,
+    valor: parseFloat(f.valor.value.replace(',','.')) || 0,
+    categoria: f.categoria.value,
+    descricao: f.descricao.value.trim(),
+    pago: f.pago.checked,
+    necessidade: f.tipo.value==='saida' ? f.necessidade.value : null,
+    conta_fixa_id: existente ? (existente.conta_fixa_id || null) : null,
+    atualizado_em: new Date().toISOString(),
+  };
+  const idx = DB.lancamentos.findIndex(l=>l.id===id);
+  if(idx>-1) DB.lancamentos[idx] = registro; else DB.lancamentos.push(registro);
+  persistDB(); fecharModal(); renderResumo(); renderLancamentos();
+  syncUpsert('fin_lancamentos', registro);
+}
+function excluirLancamento(id){
+  DB.lancamentos = DB.lancamentos.filter(l=>l.id!==id);
+  persistDB(); fecharModal(); renderResumo(); renderLancamentos();
+  syncDelete('fin_lancamentos', id);
+}
+
+/* ---------- contas fixas ---------- */
+function statusContaFixa(conta){
+  const hoje = new Date();
+  const pagaEsteMes = DB.lancamentos.some(l=>l.conta_fixa_id===conta.id && mesDe(l.data)===mesDe(hojeISO()));
+  if(pagaEsteMes) return {texto:'Paga', classe:'ok'};
+  const dia = hoje.getDate();
+  if(conta.dia_vencimento < dia) return {texto:'Atrasada', classe:'atrasada'};
+  const diasFalta = conta.dia_vencimento - dia;
+  if(diasFalta <= 3) return {texto: diasFalta===0 ? 'Vence hoje' : `Vence em ${diasFalta} dia(s)`, classe:'perto'};
+  return {texto:`Vence dia ${conta.dia_vencimento}`, classe:'normal'};
+}
+function renderContasFixas(){
+  const el = document.getElementById('aba-contasfixas');
+  const contas = DB.contas_fixas.filter(c=>c.ativa).sort((a,b)=>a.dia_vencimento-b.dia_vencimento);
+  if(!contas.length){ el.innerHTML = '<div class="vazio">Nenhuma conta fixa cadastrada. Toque em + para criar.</div>'; return; }
+  el.innerHTML = contas.map(c=>{
+    const info = catInfo(c.categoria);
+    const st = statusContaFixa(c);
+    return `<div class="conta-fixa">
+      <div class="conta-fixa-icone">${info.emoji}</div>
+      <div class="conta-fixa-info">
+        <span class="conta-fixa-nome" onclick="abrirModalContaFixa('${c.id}')">${escapeHtml(c.nome)}</span>
+        <span class="conta-fixa-badge ${st.classe}">${st.texto}</span>
+      </div>
+      <div class="conta-fixa-valor">${formatBRL(c.valor)}</div>
+      ${st.classe!=='ok' ? `<button class="btn-pagar" onclick="marcarContaComoPaga('${c.id}')">Marcar como paga</button>` : ''}
+    </div>`;
+  }).join('');
+}
+function abrirModalContaFixa(id){
+  const c = id ? DB.contas_fixas.find(x=>x.id===id) : null;
+  abrirModal(`
+    <h3>${id?'Editar':'Nova'} conta fixa</h3>
+    <form onsubmit="salvarContaFixa(event, ${id?`'${id}'`:'null'})">
+      <div class="campo"><label>Nome</label><input name="nome" type="text" required maxlength="60" value="${c?escapeHtml(c.nome):''}"></div>
+      <div class="campo"><label>Valor (R$)</label><input name="valor" type="number" step="0.01" min="0" required value="${c?c.valor:''}"></div>
+      <div class="campo"><label>Dia do vencimento</label><input name="dia_vencimento" type="number" min="1" max="31" required value="${c?c.dia_vencimento:''}"></div>
+      <div class="campo"><label>Categoria</label><select name="categoria">${CATEGORIAS.map(cat=>`<option value="${cat.id}" ${c&&c.categoria===cat.id?'selected':''}>${cat.emoji} ${cat.nome}</option>`).join('')}</select></div>
+      <div class="campo campo-check"><label><input type="checkbox" name="ativa" ${!c||c.ativa?'checked':''}> Ativa</label></div>
+      <div class="modal-botoes">
+        ${id?`<button type="button" class="btn-excluir" onclick="excluirContaFixa('${id}')">Excluir</button>`:''}
+        <button type="submit" class="btn-salvar">Salvar</button>
+      </div>
+    </form>
+  `);
+}
+function salvarContaFixa(ev, id){
+  ev.preventDefault();
+  const f = ev.target;
+  const registro = {
+    id: id || uid(),
+    nome: f.nome.value.trim(),
+    valor: parseFloat(f.valor.value.replace(',','.')) || 0,
+    tipo: 'saida',
+    dia_vencimento: parseInt(f.dia_vencimento.value, 10),
+    categoria: f.categoria.value,
+    ativa: f.ativa.checked,
+  };
+  const idx = DB.contas_fixas.findIndex(c=>c.id===id);
+  if(idx>-1) DB.contas_fixas[idx] = registro; else DB.contas_fixas.push(registro);
+  persistDB(); fecharModal(); renderContasFixas();
+  syncUpsert('fin_contas_fixas', registro);
+}
+function excluirContaFixa(id){
+  DB.contas_fixas = DB.contas_fixas.filter(c=>c.id!==id);
+  persistDB(); fecharModal(); renderContasFixas();
+  syncDelete('fin_contas_fixas', id);
+}
+function marcarContaComoPaga(contaId){
+  const conta = DB.contas_fixas.find(c=>c.id===contaId);
+  if(!conta) return;
+  const registro = {
+    id: uid(), data: hojeISO(), tipo: conta.tipo, valor: conta.valor,
+    categoria: conta.categoria, descricao: conta.nome, pago: true, necessidade: 'necessario',
+    conta_fixa_id: conta.id, atualizado_em: new Date().toISOString(),
+  };
+  DB.lancamentos.push(registro);
+  persistDB(); renderContasFixas(); renderResumo(); renderLancamentos();
+  syncUpsert('fin_lancamentos', registro);
+}
+
+/* ---------- metas ---------- */
+function renderMetas(){
+  const el = document.getElementById('aba-metas');
+  if(!DB.metas.length){ el.innerHTML = '<div class="vazio">Nenhuma meta ainda. Toque em + para criar.</div>'; return; }
+  el.innerHTML = DB.metas.map(m=>{
+    const pct = m.valor_alvo>0 ? Math.min(100, (m.valor_guardado/m.valor_alvo)*100) : 0;
+    return `<div class="meta-card">
+      <div class="meta-topo">
+        <span class="meta-nome" onclick="abrirModalMeta('${m.id}')">${escapeHtml(m.nome)}</span>
+        ${m.prazo?`<span class="meta-prazo">até ${formatDataCurta(m.prazo)}</span>`:''}
+      </div>
+      <div class="meta-barra"><div class="meta-progresso" style="width:${pct}%"></div></div>
+      <div class="meta-valores"><span>${formatBRL(m.valor_guardado)} de ${formatBRL(m.valor_alvo)}</span><span>${pct.toFixed(0)}%</span></div>
+      <button class="btn-guardar" onclick="abrirModalGuardar('${m.id}')">Guardar valor</button>
+    </div>`;
+  }).join('');
+}
+function abrirModalMeta(id){
+  const m = id ? DB.metas.find(x=>x.id===id) : null;
+  abrirModal(`
+    <h3>${id?'Editar':'Nova'} meta</h3>
+    <form onsubmit="salvarMeta(event, ${id?`'${id}'`:'null'})">
+      <div class="campo"><label>Nome</label><input name="nome" type="text" required maxlength="60" value="${m?escapeHtml(m.nome):''}"></div>
+      <div class="campo"><label>Valor alvo (R$)</label><input name="valor_alvo" type="number" step="0.01" min="0" required value="${m?m.valor_alvo:''}"></div>
+      <div class="campo"><label>Prazo (opcional)</label><input name="prazo" type="date" value="${m&&m.prazo?m.prazo:''}"></div>
+      <div class="modal-botoes">
+        ${id?`<button type="button" class="btn-excluir" onclick="excluirMeta('${id}')">Excluir</button>`:''}
+        <button type="submit" class="btn-salvar">Salvar</button>
+      </div>
+    </form>
+  `);
+}
+function salvarMeta(ev, id){
+  ev.preventDefault();
+  const f = ev.target;
+  const existente = id ? DB.metas.find(m=>m.id===id) : null;
+  const registro = {
+    id: id || uid(),
+    nome: f.nome.value.trim(),
+    valor_alvo: parseFloat(f.valor_alvo.value.replace(',','.')) || 0,
+    valor_guardado: existente ? existente.valor_guardado : 0,
+    prazo: f.prazo.value || null,
+  };
+  const idx = DB.metas.findIndex(m=>m.id===id);
+  if(idx>-1) DB.metas[idx] = registro; else DB.metas.push(registro);
+  persistDB(); fecharModal(); renderMetas();
+  syncUpsert('fin_metas', registro);
+}
+function excluirMeta(id){
+  DB.metas = DB.metas.filter(m=>m.id!==id);
+  persistDB(); fecharModal(); renderMetas();
+  syncDelete('fin_metas', id);
+}
+function abrirModalGuardar(id){
+  const m = DB.metas.find(x=>x.id===id);
+  if(!m) return;
+  abrirModal(`
+    <h3>Guardar valor em "${escapeHtml(m.nome)}"</h3>
+    <form onsubmit="confirmarGuardarValor(event,'${id}')">
+      <div class="campo"><label>Valor (R$)</label><input name="valor" type="number" step="0.01" min="0.01" required autofocus></div>
+      <div class="modal-botoes"><button type="submit" class="btn-salvar">Guardar</button></div>
+    </form>
+  `);
+}
+function confirmarGuardarValor(ev, id){
+  ev.preventDefault();
+  const valor = parseFloat(ev.target.valor.value.replace(',','.')) || 0;
+  const m = DB.metas.find(x=>x.id===id);
+  if(!m || valor<=0) return;
+  m.valor_guardado = (m.valor_guardado||0) + valor;
+  persistDB(); fecharModal(); renderMetas();
+  syncUpsert('fin_metas', m);
+}
+
+function renderTudo(){ renderResumo(); renderLancamentos(); renderContasFixas(); renderMetas(); }
+
+/* ---------- autenticação ---------- */
+let modoAuth = 'login';
+function alternarAuth(){
+  modoAuth = modoAuth==='login' ? 'signup' : 'login';
+  document.getElementById('authBotaoPrincipal').textContent = modoAuth==='login' ? 'Entrar' : 'Criar conta';
+  document.getElementById('authAlternarTexto').innerHTML = modoAuth==='login'
+    ? 'Ainda não tem conta? <a href="#" onclick="alternarAuth();return false;">Criar conta</a>'
+    : 'Já tem conta? <a href="#" onclick="alternarAuth();return false;">Entrar</a>';
+}
+function mostrarReset(){
+  document.getElementById('authFormNormal').style.display = 'none';
+  document.getElementById('authFormReset').style.display = 'block';
+}
+function esconderReset(){
+  document.getElementById('authFormReset').style.display = 'none';
+  document.getElementById('authFormNormal').style.display = 'block';
+}
+function comTimeout(p, ms){
+  return Promise.race([p, new Promise((_,r)=>setTimeout(()=>r(new Error('Tempo esgotado — tente novamente.')), ms||15000))]);
+}
+function traduzErroAuth(msg){
+  if(/Invalid login credentials/i.test(msg)) return 'E-mail ou senha incorretos.';
+  if(/User already registered/i.test(msg)) return 'Este e-mail já tem conta — tente entrar.';
+  if(/Password should be at least/i.test(msg)) return 'A senha precisa ter pelo menos 6 caracteres.';
+  if(/Unable to validate email/i.test(msg)) return 'E-mail inválido.';
+  return msg || 'Algo deu errado. Tente de novo.';
+}
+async function authPrincipal(ev){
+  ev.preventDefault();
+  const f = ev.target;
+  const email = f.email.value.trim().toLowerCase();
+  const senha = f.senha.value;
+  const msgEl = document.getElementById('authMsg');
+  msgEl.textContent = ''; msgEl.className = 'auth-msg';
+  if(modoAuth==='signup' && senha.length < 8){
+    msgEl.textContent = 'Use uma senha com pelo menos 8 caracteres.'; msgEl.className = 'auth-msg err';
+    return;
+  }
+  try{
+    if(modoAuth==='login'){
+      const {error} = await comTimeout(sb.auth.signInWithPassword({email, password: senha}));
+      if(error) throw error;
+    }else{
+      const {error} = await comTimeout(sb.auth.signUp({email, password: senha}));
+      if(error) throw error;
+      msgEl.textContent = 'Conta criada! Você já pode entrar.'; msgEl.className = 'auth-msg ok';
+    }
+  }catch(e){
+    msgEl.textContent = traduzErroAuth(e.message); msgEl.className = 'auth-msg err';
+  }
+}
+async function authReset(){
+  const email = (document.getElementById('authEmailReset').value||'').trim().toLowerCase();
+  const msgEl = document.getElementById('authMsg');
+  if(!email){ msgEl.textContent = 'Digite seu e-mail para redefinir a senha.'; msgEl.className = 'auth-msg err'; return; }
+  try{
+    const {error} = await comTimeout(sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin+location.pathname}));
+    if(error) throw error;
+    msgEl.textContent = 'Enviamos um link de redefinição para o seu e-mail.'; msgEl.className = 'auth-msg ok';
+  }catch(e){
+    msgEl.textContent = traduzErroAuth(e.message); msgEl.className = 'auth-msg err';
+  }
+}
+function mostrarDefinirSenha(){
+  telas('login');
+  document.getElementById('authFormNormal').style.display = 'none';
+  document.getElementById('authFormReset').style.display = 'none';
+  document.getElementById('authFormNovaSenha').style.display = 'block';
+}
+async function salvarNovaSenha(ev){
+  ev.preventDefault();
+  const nova = ev.target.novaSenha.value;
+  const msgEl = document.getElementById('authMsg');
+  if(nova.length < 8){
+    msgEl.textContent = 'Use uma senha com pelo menos 8 caracteres.'; msgEl.className = 'auth-msg err';
+    return;
+  }
+  try{
+    const {error} = await comTimeout(sb.auth.updateUser({password: nova}));
+    if(error) throw error;
+    msgEl.textContent = 'Senha alterada! Você já está logada.'; msgEl.className = 'auth-msg ok';
+    document.getElementById('authFormNormal').style.display = 'block';
+    document.getElementById('authFormNovaSenha').style.display = 'none';
+  }catch(e){
+    msgEl.textContent = traduzErroAuth(e.message); msgEl.className = 'auth-msg err';
+  }
+}
+function sair(){
+  telas('login');
+  pararRelogioInatividade();
+  sb.auth.signOut().catch(()=>{});
+}
+
+/* ---------- logout automático por inatividade ---------- */
+const INATIVIDADE_LIMITE_MS = 30 * 60 * 1000;
+let ultimaAtividade = Date.now();
+let checadorInatividade = null;
+function registrarAtividade(){ ultimaAtividade = Date.now(); }
+function checarInatividade(){
+  if(window.AUTH_ATIVO && sessaoAtual && (Date.now() - ultimaAtividade) > INATIVIDADE_LIMITE_MS) sair();
+}
+function iniciarRelogioInatividade(){
+  registrarAtividade();
+  ['touchstart','mousedown','keydown','scroll'].forEach(evt=>window.addEventListener(evt, registrarAtividade, {passive:true}));
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') checarInatividade(); });
+  checadorInatividade = setInterval(checarInatividade, 60*1000);
+}
+function pararRelogioInatividade(){
+  if(checadorInatividade){ clearInterval(checadorInatividade); checadorInatividade = null; }
+}
+function telas(nome){
+  document.getElementById('authGate').style.display = nome==='login' ? 'flex' : 'none';
+  document.getElementById('app').style.display = nome==='app' ? 'block' : 'none';
+}
+
+/* ---------- sincronização com Supabase ---------- */
+async function carregarNuvem(){
+  if(!window.AUTH_ATIVO || !sessaoAtual) return;
+  try{
+    const [{data:l},{data:c},{data:m}] = await Promise.all([
+      comTimeout(sb.from('fin_lancamentos').select('*')),
+      comTimeout(sb.from('fin_contas_fixas').select('*')),
+      comTimeout(sb.from('fin_metas').select('*')),
+    ]);
+    DB = {lancamentos: l||[], contas_fixas: c||[], metas: m||[]};
+    persistDB();
+    renderTudo();
+  }catch(e){}
+}
+async function syncUpsert(tabela, registro){
+  if(!window.AUTH_ATIVO || !sessaoAtual || !sb) return;
+  try{ await sb.from(tabela).upsert({...registro, user_id: sessaoAtual.user.id}); }catch(e){}
+}
+async function syncDelete(tabela, id){
+  if(!window.AUTH_ATIVO || !sessaoAtual || !sb) return;
+  try{ await sb.from(tabela).delete().eq('id', id); }catch(e){}
+}
+
+/* ---------- inicialização ---------- */
+function registrarSW(){
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+  }
+}
+function aoMudarSessao(session){
+  sessaoAtual = session;
+  if(session){ telas('app'); renderTudo(); carregarNuvem(); iniciarRelogioInatividade(); }
+  else{ telas('login'); pararRelogioInatividade(); }
+}
+function iniciarApp(){
+  mesResumo = mesDe(hojeISO());
+  mesLanc = mesDe(hojeISO());
+  registrarSW();
+
+  if(!window.AUTH_ATIVO){
+    telas('app');
+    renderTudo();
+    return;
+  }
+  document.getElementById('btnSair').style.display = 'block';
+  sb = window.supabase.createClient(window.SUPA_URL, window.SUPA_ANON, {
+    auth: {persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, lock: async (n,t,fn)=> await fn()}
+  });
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event==='PASSWORD_RECOVERY'){ mostrarDefinirSenha(); return; }
+    aoMudarSessao(session);
+  });
+  sb.auth.getSession().then(({data})=>aoMudarSessao(data.session)).catch(()=>telas('login'));
+}
+window.addEventListener('DOMContentLoaded', iniciarApp);
+</script>
+</body>
+</html>
